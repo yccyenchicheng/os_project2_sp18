@@ -1,9 +1,9 @@
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
-#include <linux/workqueue.h>
+//#include <linux/workqueue.h>
 #include <net/sock.h>
-#include <net/tcp.h>
+//#include <net/tcp.h>
 #include <asm/uaccess.h>
 
 MODULE_LICENSE("GPL");
@@ -213,7 +213,6 @@ static void miniex_work_handler(struct work_struct *work)
 		}
 
 		// got a connection
-
 		ret = miniex_recv(csock, sockbuf, 4096);
 		
 		if(ret > 0){
