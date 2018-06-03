@@ -14,6 +14,7 @@
 #include <linux/in.h>
 #include <linux/miscdevice.h>
 #include <asm/uaccess.h>
+// #include <linux/uaccess.h>    for the copy_to_user function
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/debugfs.h>
@@ -29,10 +30,21 @@
 #define slave_IOCTL_MMAP 0x12345678
 #define slave_IOCTL_EXIT 0x12345679
 
+#define DEVICE_NAME "slavechar"
+#define CLASS_NAME "slave"
 
+#ifndef BUF_SIZE
 #define BUF_SIZE 512
+#endif
 
+MODULE_LICENSE("GPL");
 
+static int majorNumber;
+static char message[BUF_SIZE] = {0};
+static int short size_of_message;
+static int numberOpens = 0;
+static struct class* slavecharClass = NULL;
+static struct device* slavecharDevice = NULL;
 
 
 struct dentry  *file1;//debug file
@@ -64,50 +76,87 @@ static struct file_operations slave_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = slave_ioctl,
 	.open = slave_open,
-	.read = receive_msg,
-	.release = slave_close
+	.read = slave_read,
+	.release = slave_release
 };
 
 //device info
-static struct miscdevice slave_dev = {
-	.minor = MISC_DYNAMIC_MINOR,
-	.name = "slave_device",
-	.fops = &slave_fops
-};
+//static struct miscdevice slave_dev = {
+//	.minor = MISC_DYNAMIC_MINOR,
+//	.name = "slave_device",
+//	.fops = &slave_fops
+//};
 
 static int __init slave_init(void)
 {
-	int ret;
-	file1 = debugfs_create_file("slave_debug", 0644, NULL, NULL, &slave_fops);
+    printk(KERN_INFO "slave device: Initializing the slave char device\n");
 
-	//register the device
-	if( (ret = misc_register(&slave_dev)) < 0){
-		printk(KERN_ERR "misc_register failed!\n");
-		return ret;
-	}
+    // Try to dynamically allocate a major number for the device -- more difficult but worth it
+    //majorNumber = register_chrdev(0, DEVICE_NAME, &fops);
+    majorNumber = register_chrdev(0, DEVICE_NAME, &slave_fops);
+    if (majorNumber<0) {
+        printk(KERN_ALERT "slave device: failed to register a major number\n");
+        return majorNumber;
+    }
+    
+    printk(KERN_INFO "slave device: registered correctly with major number %d\n", majorNumber);
 
-	printk(KERN_INFO "slave has been registered!\n");
+    // Register the device class
+    ebbcharClass = class_create(THIS_MODULE, CLASS_NAME);
+    if (IS_ERR(ebbcharClass)) {                // Check for error and clean up if there is
+        unregister_chrdev(majorNumber, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to register device class\n");
+        return PTR_ERR(ebbcharClass);          // Correct way to return an error on a pointer
+    }
+    printk(KERN_INFO "slave device: device class registered correctly\n");
 
-	return 0;
+    // Register the device driver
+    slavecharDevice = device_create(slavecharClass, NULL, MKDEV(majorNumber, 0), NULL, DEVICE_NAME);
+    if (IS_ERR(slavecharDevice)) {               // Clean up if there is an error
+        class_destroy(slavecharClass);           // Repeated code but the alternative is goto statements
+        unregister_chrdev(majorNumber, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to create the device\n");
+        return PTR_ERR(slavecharDevice);
+    }
+    printk(KERN_INFO "slave device: device class created correctly\n"); // Made it! device was initialized
+    return 0;
 }
 
 static void __exit slave_exit(void)
 {
-	misc_deregister(&slave_dev);
-	printk(KERN_INFO "slave exited!\n");
-	debugfs_remove(file1);
+    device_destroy(ebbcharClass, MKDEV(majorNumber, 0));     // remove the device
+    class_unregister(ebbcharClass);                          // unregister the device class
+    class_destroy(ebbcharClass);                             // remove the device class
+    unregister_chrdev(majorNumber, DEVICE_NAME);             // unregister the major number
+    printk(KERN_INFO "slave device exited!\n");
+	//misc_deregister(&slave_dev);
+	//printk(KERN_INFO "slave exited!\n");
+	//debugfs_remove(file1);
 }
 
-
-int slave_close(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
 
 int slave_open(struct inode *inode, struct file *filp)
 {
-	return 0;
+    numberOpens++;
+    printk(KERN_INFO "slave device: Device has been opened %d time(s)\n", numberOpens);
+    return 0;
 }
+
+int slave_read(struct file *filp, char *buf, size_t count, loff_t *offp )
+{
+        //call when user is reading from this device
+        int err_count = 0;
+	//len = krecv(sockfd_cli, msg, sizeof(msg), 0);
+        len = krecv(sockfd_cli, message, sizeof(message), 0);
+        
+        err_count = copy_to_user(buf, message, len);
+        if (error_count == 0) {
+          printk(KERN_INFO "slave device: Sent %d characters to the user\n", len);
+          return len;  // clear the position to the start and return 0
+        }
+	return len;
+}
+
 static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
 	long ret = -EINVAL;
@@ -119,10 +168,10 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 	struct page *p_print;
 	unsigned char *px;
 
-    pgd_t *pgd;
+        pgd_t *pgd;
 	pud_t *pud;
 	pmd_t *pmd;
-    pte_t *ptep, pte;
+        pte_t *ptep, pte;
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 
@@ -185,20 +234,13 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 	return ret;
 }
 
-int receive_msg(struct file *filp, char *buf, size_t count, loff_t *offp )
+int slave_release(struct inode *inode, struct file *filp)
 {
-//call when user is reading from this device
-	char msg[BUF_SIZE];
-	size_t len;
-	len = krecv(sockfd_cli, msg, sizeof(msg), 0);
-	if(copy_to_user(buf, msg, len))
-		return -ENOMEM;
-	return len;
+        printk(KERN_INFO "slavechar: Device closed\n");
+	return 0;
 }
-
 
 
 
 module_init(slave_init);
 module_exit(slave_exit);
-MODULE_LICENSE("GPL");
