@@ -1,9 +1,10 @@
 #
-  # Makefile for kernel test
-  #
+# Makefile for kernel test
+#
 PWD         := $(shell pwd) 
 KVERSION    := $(shell uname -r)
-KERNEL_DIR   = /usr/src/linux-headers-$(KVERSION)/
+#KERNEL_DIR   = /usr/src/linux-headers-$(KVERSION)/
+KERNEL_DIR   = /home/charles/linux-$(KVERSION)/
 MODULE_NAME  = master_device
 obj-m       := $(MODULE_NAME).o   
 
