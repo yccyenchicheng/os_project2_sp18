@@ -16,8 +16,7 @@
 #include <linux/in.h>
 #include <net/sock.h>
 #include <asm/processor.h>
-//#include <asm/uaccess.h>
-#include <linux/uaccess.h>
+#include <asm/uaccess.h>
 #include "ksocket.h"
 #include "sxgdebug.h"
 
@@ -129,8 +128,7 @@ error_kaccept:
 ssize_t krecv(ksocket_t socket, void *buffer, size_t length, int flags)
 {
 	struct socket *sk;
-	//struct msghdr msg;
-        struct user_msghdr msg;  // Change. Reference: ~/linux-4.15.15/include/linux/socket.h
+	struct msghdr msg;
 	struct iovec iov;
 	int ret;
 #ifndef KSOCKET_ADDR_SAFE
@@ -159,10 +157,7 @@ ssize_t krecv(ksocket_t socket, void *buffer, size_t length, int flags)
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 #endif
-	
-        //ret = sock_recvmsg(sk, &msg, length, flags);
-        ret = sock_recvmsg(sk, &msg, flags);
-        //ret = __sys_recvmsg(sk, &msg, flags);
+	ret = sock_recvmsg(sk, &msg, length, flags);
 #ifndef KSOCKET_ADDR_SAFE
 	set_fs(old_fs);
 #endif
@@ -178,8 +173,7 @@ out_krecv:
 ssize_t ksend(ksocket_t socket, const void *buffer, size_t length, int flags)
 {
 	struct socket *sk;
-	//struct msghdr msg;
-        struct user_msghdr msg;  // Change. Reference: ~/linux-4.15.15/include/linux/socket.h
+	struct msghdr msg;
 	struct iovec iov;
 	int len;
 #ifndef KSOCKET_ADDR_SAFE
@@ -204,8 +198,7 @@ ssize_t ksend(ksocket_t socket, const void *buffer, size_t length, int flags)
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 #endif
-	//len = sock_sendmsg(sk, &msg, length);//?
-        len = __sys_sendmsg(sk, &msg, flags);
+	len = sock_sendmsg(sk, &msg, length);//?
 #ifndef KSOCKET_ADDR_SAFE
 	set_fs(old_fs);
 #endif
@@ -245,8 +238,7 @@ ssize_t krecvfrom(ksocket_t socket, void * buffer, size_t length,
               int * address_len)
 {
 	struct socket *sk;
-	//struct msghdr msg;
-        struct user_msghdr msg;  // Change. Reference: ~/linux-4.15.15/include/linux/socket.h
+	struct msghdr msg;
 	struct iovec iov;
 	int len;
 #ifndef KSOCKET_ADDR_SAFE
@@ -288,7 +280,6 @@ ssize_t ksendto(ksocket_t socket, void *message, size_t length,
 {
 	struct socket *sk;
 	struct msghdr msg;
-        //struct user_msghdr msg;  // Change. Reference: ~/linux-4.15.15/include/linux/socket.h
 	struct iovec iov;
 	int len;
 #ifndef KSOCKET_ADDR_SAFE
@@ -316,8 +307,7 @@ ssize_t ksendto(ksocket_t socket, void *message, size_t length,
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 #endif
-	//len = sock_sendmsg(sk, &msg, length);//?
-        len = sock_sendmsg(sk, &msg, flags);
+	len = sock_sendmsg(sk, &msg, length);//?
 #ifndef KSOCKET_ADDR_SAFE
 	set_fs(old_fs);
 #endif
