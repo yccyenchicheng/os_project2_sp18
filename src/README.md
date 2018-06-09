@@ -27,12 +27,11 @@ And in `mseg`, we should see the `page descriptors` for method `mmap`.
 
 File contents
 ---
-master_device/ : the device moudule for master server
-slave_device/  : the device moudule for slave client
-ksocket/       : the device moudule including the funtions used for kernel socket
-input/         : input files to be transmitted
-output/        : output files created by us
-user_program/  : the user program for `master` side and `slave` side
+- `master_device/` : the device moudule for master server
+- `slave_device/`  : the device moudule for slave client
+- `ksocket/`       : the device moudule including the funtions used for kernel socket
+- `user_program/`  : the user program for `master` side and `slave` side
+- `input/`         : input files to be transmitted
+- `output/`        : output files created by us
 
-#Though the execution order of user program "master" and "slave" does not matter,
-#it is suggested to execute "master" first to get more precise transmission time.
+Thanks for reading.
