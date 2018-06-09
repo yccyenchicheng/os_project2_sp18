@@ -27,11 +27,11 @@ And in `mseg`, we should see the `page descriptors` for method `mmap`.
 
 File contents
 ---
-- `master_device/` : the device moudule for master server
-- `slave_device/`  : the device moudule for slave client
-- `ksocket/`       : the device moudule including the funtions used for kernel socket
+- `master_device/` : the directory of the c code and `Makefile` for the `master_device` kernel module
+- `slave_device/`  : the directory of the c code and `Makefile` for the `slave_device` kernel module
+- `ksocket/`       : the directory of the c code and `Makefile` for the `ksocket` kernel module to use the kernel socket 
 - `user_program/`  : the user program for `master` side and `slave` side
 - `input/`         : input files to be transmitted
 - `output/`        : output files created by us
-
+  
 Thanks for reading.
