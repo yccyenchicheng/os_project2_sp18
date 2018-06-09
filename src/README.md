@@ -10,7 +10,7 @@ $ sudo ./compile.sh
 ```
 2. (Optional) Check if `ksocket`, `master_device` and `slave_device` have been installed:
 ``` sudo lsmod ```
-3. Change to `user_program` dir
+3. Change to `user_program` directory,
 ``` 
 $ cd user_program
 ```
