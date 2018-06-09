@@ -11,11 +11,19 @@
 
 #define PAGE_SIZE 4096
 #define BUF_SIZE 512
+#define MAP_SIZE PAGE_SIZE * 100
+
 size_t get_filesize(const char* filename);//get the size of the input file
 
 
 int main (int argc, char* argv[])
 {
+	if (argc != 3) {
+		printf("Usage: sudo ./master target_file <fcntl or mmap>\n");
+		exit(0);
+	}
+	
+
 	char buf[BUF_SIZE];
 	int i, dev_fd, file_fd;// the fd for the device and the fd for the input file
 	size_t ret, file_size, offset = 0, tmp;
@@ -28,7 +36,6 @@ int main (int argc, char* argv[])
 
 	strcpy(file_name, argv[1]);
 	strcpy(method, argv[2]);
-
 
 	if( (dev_fd = open("/dev/master_device", O_RDWR)) < 0)
 	{
@@ -65,8 +72,21 @@ int main (int argc, char* argv[])
 				write(dev_fd, buf, ret);//write to the the device
 			}while(ret > 0);
 			break;
+		case 'm':
+			while (offset < file_size) {
+				size_t length = MAP_SIZE;
+				if ((file_size - offset) < length) {
+					length = file_size - offset;
+				}
+				file_address = mmap(NULL, length, PROT_READ, MAP_SHARED, file_fd, offset);
+				kernel_address = mmap(NULL, length, PROT_WRITE, MAP_SHARED, dev_fd, offset);
+				memcpy(kernel_address, file_address, length);
+				offset += length;
+				ioctl(dev_fd, 0x12345678, length);
+			}
+			break;
 	}
-
+	ioctl(dev_fd, 7122);
 	if(ioctl(dev_fd, 0x12345679) == -1) // end sending data, close the connection
 	{
 		perror("ioclt server exits error\n");

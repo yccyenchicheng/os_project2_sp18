@@ -14,7 +14,6 @@
 #include <linux/in.h>
 #include <linux/miscdevice.h>
 #include <asm/uaccess.h>
-// #include <linux/uaccess.h>    for the copy_to_user function
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/debugfs.h>
@@ -30,21 +29,10 @@
 #define slave_IOCTL_MMAP 0x12345678
 #define slave_IOCTL_EXIT 0x12345679
 
-#define DEVICE_NAME "slavechar"
-#define CLASS_NAME "slave"
 
-#ifndef BUF_SIZE
 #define BUF_SIZE 512
-#endif
+#define MAP_SIZE PAGE_SIZE * 100
 
-MODULE_LICENSE("GPL");
-
-static int majorNumber;
-//static char message[BUF_SIZE] = {0};
-//static int short size_of_message;
-static int numberOpens = 0;
-static struct class* slavecharClass = NULL;
-static struct device* slavecharDevice = NULL;
 
 
 struct dentry  *file1;//debug file
@@ -62,126 +50,116 @@ extern char *inet_ntoa(struct in_addr *in); //DO NOT forget to kfree the return 
 static int __init slave_init(void);
 static void __exit slave_exit(void);
 
-static int slave_open(struct inode *inode, struct file *filp);
-static int slave_release(struct inode *inode, struct file *filp);
-//int receive_msg(struct file *filp, char *buf, size_t count, loff_t *offp );
-static ssize_t slave_read(struct file *filp, char *buf, size_t count, loff_t *offp );
+int slave_close(struct inode *inode, struct file *filp);
+int slave_open(struct inode *inode, struct file *filp);
 static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param);
+int receive_msg(struct file *filp, char *buf, size_t count, loff_t *offp );
 
 static mm_segment_t old_fs;
 static ksocket_t sockfd_cli;//socket to the master server
 static struct sockaddr_in addr_srv; //address of the master server
 
-//file operations
-static struct file_operations slave_fops = 
+static int mmap_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
+	vmf->page = virt_to_page(vma->vm_private_data);
+	get_page(vmf->page);
+	return 0;
+}
+void mmap_open(struct vm_area_struct *vma)
+{
+	/* Do nothing */
+}
+void mmap_close(struct vm_area_struct *vma)
+{
+	/* Do nothing */
+}
+static const struct vm_operations_struct my_vm_ops = {
+	.open = mmap_open,
+	.close = mmap_close,
+	.fault = mmap_fault
+};
+
+static int my_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	io_remap_pfn_range(vma,
+		vma->vm_start,
+		virt_to_phys(file->private_data) >> PAGE_SHIFT,
+                vma->vm_end - vma->vm_start,
+		vma->vm_page_prot);
+	vma->vm_ops = &my_vm_ops;
+	vma->vm_flags |= VM_RESERVED;
+	vma->vm_private_data = file->private_data;
+	mmap_open(vma);
+	return 0;
+}
+//file operations
+static struct file_operations slave_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = slave_ioctl,
 	.open = slave_open,
-	.read = slave_read,
-	.release = slave_release
+	.read = receive_msg,
+	.release = slave_close,
+	.mmap = my_mmap
 };
 
 //device info
-//static struct miscdevice slave_dev = {
-//	.minor = MISC_DYNAMIC_MINOR,
-//	.name = "slave_device",
-//	.fops = &slave_fops
-//};
+static struct miscdevice slave_dev = {
+	.minor = MISC_DYNAMIC_MINOR,
+	.name = "slave_device",
+	.fops = &slave_fops
+};
 
 static int __init slave_init(void)
 {
-    printk(KERN_INFO "slave device: Initializing the slave char device\n");
+	int ret;
+	file1 = debugfs_create_file("slave_debug", 0644, NULL, NULL, &slave_fops);
 
-    // Try to dynamically allocate a major number for the device -- more difficult but worth it
-    //majorNumber = register_chrdev(0, DEVICE_NAME, &fops);
-    majorNumber = register_chrdev(0, DEVICE_NAME, &slave_fops);
-    if (majorNumber<0) {
-        printk(KERN_ALERT "slave device: failed to register a major number\n");
-        return majorNumber;
-    }
-    
-    printk(KERN_INFO "slave device: registered correctly with major number %d\n", majorNumber);
+	//register the device
+	if( (ret = misc_register(&slave_dev)) < 0){
+		printk(KERN_ERR "misc_register failed!\n");
+		return ret;
+	}
 
-    // Register the device class
-    slavecharClass = class_create(THIS_MODULE, CLASS_NAME);
-    if (IS_ERR(slavecharClass)) {                // Check for error and clean up if there is
-        unregister_chrdev(majorNumber, DEVICE_NAME);
-        printk(KERN_ALERT "Failed to register device class\n");
-        return PTR_ERR(slavecharClass);          // Correct way to return an error on a pointer
-    }
-    printk(KERN_INFO "slave device: device class registered correctly\n");
+	printk(KERN_INFO "slave has been registered!\n");
 
-    // Register the device driver
-    slavecharDevice = device_create(slavecharClass, NULL, MKDEV(majorNumber, 0), NULL, DEVICE_NAME);
-    if (IS_ERR(slavecharDevice)) {               // Clean up if there is an error
-        class_destroy(slavecharClass);           // Repeated code but the alternative is goto statements
-        unregister_chrdev(majorNumber, DEVICE_NAME);
-        printk(KERN_ALERT "Failed to create the device\n");
-        return PTR_ERR(slavecharDevice);
-    }
-    printk(KERN_INFO "slave device: device class created correctly\n"); // Made it! device was initialized
-    return 0;
+	return 0;
 }
 
 static void __exit slave_exit(void)
 {
-    device_destroy(slavecharClass, MKDEV(majorNumber, 0));     // remove the device
-    class_unregister(slavecharClass);                          // unregister the device class
-    class_destroy(slavecharClass);                             // remove the device class
-    unregister_chrdev(majorNumber, DEVICE_NAME);             // unregister the major number
-    printk(KERN_INFO "slave device exited!\n");
-	//misc_deregister(&slave_dev);
-	//printk(KERN_INFO "slave exited!\n");
-	//debugfs_remove(file1);
+	misc_deregister(&slave_dev);
+	printk(KERN_INFO "slave exited!\n");
+	debugfs_remove(file1);
 }
 
 
-//int slave_open(struct inode *inode, struct file *filp)
-static int slave_open(struct inode *inode, struct file *filp)
+int slave_close(struct inode *inode, struct file *filp)
 {
-    numberOpens++;
-    printk(KERN_INFO "slave device: Device has been opened %d time(s)\n", numberOpens);
-    return 0;
+	kfree(filp->private_data);
+	return 0;
 }
 
-//int slave_read(struct file *filp, char *buf, size_t count, loff_t *offp )
-static ssize_t slave_read(struct file *filp, char *buf, size_t count, loff_t *offp )
+int slave_open(struct inode *inode, struct file *filp)
 {
-    //call when user is reading from this device
-    int error_count = 0;
-    //len = krecv(sockfd_cli, msg, sizeof(msg), 0);
-    char message[BUF_SIZE];
-    size_t len;
-    len = krecv(sockfd_cli, message, sizeof(message), 0);
-    
-    error_count = copy_to_user(buf, message, len);
-    if (error_count == 0) {
-        printk(KERN_INFO "slave device: Sent %d characters to the user\n", len);
-        return len;  // clear the position to the start and return 0
-    } else {
-        printk(KERN_INFO "slave device: Failed to sent %d characters to the user\n", error_count);
-        return -EFAULT;
-    }
+	filp->private_data = kmalloc(MAP_SIZE, GFP_KERNEL);
+	return 0;
 }
-
-
-//long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
 	long ret = -EINVAL;
 
 	int addr_len ;
-	unsigned int i;
-	size_t len, data_size = 0;
+	//unsigned int i;
+	//size_t len, data_size = 0;
+	size_t offset = 0, rec_n;
 	char *tmp, ip[20], buf[BUF_SIZE];
-	struct page *p_print;
-	unsigned char *px;
+	//struct page *p_print;
+	//unsigned char *px;
 
-        pgd_t *pgd;
+	pgd_t *pgd;
 	pud_t *pud;
 	pmd_t *pmd;
-        pte_t *ptep, pte;
+	pte_t *ptep, pte;
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 
@@ -218,7 +196,15 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 			ret = 0;
 			break;
 		case slave_IOCTL_MMAP:
-
+			while (1) {
+				rec_n = krecv(sockfd_cli, buf, sizeof(buf), 0);
+				if (rec_n == 0) {
+					break;
+				}
+				memcpy(file->private_data + offset, buf, rec_n);
+				offset += rec_n;
+			}
+			ret = offset;
 			break;
 
 		case slave_IOCTL_EXIT:
@@ -231,7 +217,7 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 			ret = 0;
 			break;
 		default:
-                        pgd = pgd_offset(current->mm, ioctl_param);
+			pgd = pgd_offset(current->mm, ioctl_param);
 			pud = pud_offset(pgd, ioctl_param);
 			pmd = pmd_offset(pud, ioctl_param);
 			ptep = pte_offset_kernel(pmd , ioctl_param);
@@ -244,11 +230,20 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 	return ret;
 }
 
-int slave_release(struct inode *inode, struct file *filp)
+int receive_msg(struct file *filp, char *buf, size_t count, loff_t *offp )
 {
-    printk(KERN_INFO "slave device: Device closed\n");
-    return 0;
+//call when user is reading from this device
+	char msg[BUF_SIZE];
+	size_t len;
+	len = krecv(sockfd_cli, msg, sizeof(msg), 0);
+	if(copy_to_user(buf, msg, len))
+		return -ENOMEM;
+	return len;
 }
+
+
+
 
 module_init(slave_init);
 module_exit(slave_exit);
+MODULE_LICENSE("GPL");

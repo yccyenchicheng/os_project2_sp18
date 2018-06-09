@@ -30,7 +30,7 @@
 #define master_IOCTL_MMAP 0x12345678
 #define master_IOCTL_EXIT 0x12345679
 #define BUF_SIZE 512
-
+#define MAP_SIZE PAGE_SIZE * 100
 typedef struct socket * ksocket_t;
 
 struct dentry  *file1;//debug file
@@ -58,6 +58,39 @@ static struct sockaddr_in addr_cli;//address for slave
 static mm_segment_t old_fs;
 static int addr_len;
 //static  struct mmap_info *mmap_msg; // pointer to the mapped data in this device
+static int mmap_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+{
+	vmf->page = virt_to_page(vma->vm_private_data);
+	get_page(vmf->page);
+	return 0;
+}
+void mmap_open(struct vm_area_struct *vma)
+{
+	/* Do nothing */
+}
+void mmap_close(struct vm_area_struct *vma)
+{
+	/* Do nothing */
+}
+static const struct vm_operations_struct my_vm_ops = {
+	.open = mmap_open,
+	.close = mmap_close,
+	.fault = mmap_fault
+};
+
+static int my_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	io_remap_pfn_range(vma,
+		vma->vm_start,
+		virt_to_phys(file->private_data) >> PAGE_SHIFT,
+                vma->vm_end - vma->vm_start,
+		vma->vm_page_prot);
+	vma->vm_ops = &my_vm_ops;
+	vma->vm_flags |= VM_RESERVED;
+	vma->vm_private_data = file->private_data;
+	mmap_open(vma);
+	return 0;
+}
 
 //file operations
 static struct file_operations master_fops = {
@@ -65,7 +98,8 @@ static struct file_operations master_fops = {
 	.unlocked_ioctl = master_ioctl,
 	.open = master_open,
 	.write = send_msg,
-	.release = master_close
+	.release = master_close,
+	.mmap = my_mmap
 };
 
 //device info
@@ -135,11 +169,13 @@ static void __exit master_exit(void)
 
 int master_close(struct inode *inode, struct file *filp)
 {
+	kfree(filp->private_data);
 	return 0;
 }
 
 int master_open(struct inode *inode, struct file *filp)
 {
+	filp->private_data = kmalloc(MAP_SIZE, GFP_KERNEL);
 	return 0;
 }
 
@@ -147,7 +183,7 @@ int master_open(struct inode *inode, struct file *filp)
 static long master_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
 	long ret = -EINVAL;
-	size_t data_size = 0, offset = 0;
+	//size_t data_size = 0, offset = 0;
 	char *tmp;
 	pgd_t *pgd;
 	pud_t *pud;
@@ -170,6 +206,8 @@ static long master_ioctl(struct file *file, unsigned int ioctl_num, unsigned lon
 			ret = 0;
 			break;
 		case master_IOCTL_MMAP:
+			//printk("%s\n", file->private_data);
+			ksend(sockfd_cli, file->private_data, ioctl_param, 0);
 			break;
 		case master_IOCTL_EXIT:
 			if(kclose(sockfd_cli) == -1)
