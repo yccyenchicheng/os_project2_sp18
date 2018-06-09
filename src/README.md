@@ -23,7 +23,7 @@ $ sudo ./master ../input/f1.in mmap
 $ sudo ./slave ../output/f1.out fcntl 127.0.0.1
 ```  
 Then we should see the `transimission time` and `transmitted file size`.  
-And in `mseg`, we should see the `page descriptors` for method `mmap`.
+And in `dmesg`, we should see the `page descriptors` for method `mmap`.
 
 File contents
 ---
