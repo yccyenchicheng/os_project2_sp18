@@ -120,7 +120,7 @@ static int __init master_init(void)
 		return ret;
 	}
 
-	printk(KERN_INFO "master has been registered!\n");
+	printk(KERN_INFO "master_device has been registered!\n");
 
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
@@ -138,17 +138,17 @@ static int __init master_init(void)
 	printk("sockfd_srv = 0x%p  socket is created \n", sockfd_srv);
 	if (sockfd_srv == NULL)
 	{
-		printk("socket failed\n");
+		printk("socket failed.\n");
 		return -1;
 	}
 	if (kbind(sockfd_srv, (struct sockaddr *)&addr_srv, addr_len) < 0)
 	{
-		printk("bind failed\n");
+		printk("bind failed.\n");
 		return -1;
 	}
 	if (klisten(sockfd_srv, 10) < 0)
 	{
-		printk("listen failed\n");
+		printk("listen failed.\n");
 		return -1;
 	}
 	return 0;
@@ -163,7 +163,7 @@ static void __exit master_exit(void)
 		return ;
 	}
 	set_fs(old_fs);
-	printk(KERN_INFO "master exited!\n");
+	printk(KERN_INFO "master_device has exited.\n");
 	debugfs_remove(file1);
 }
 
@@ -241,9 +241,6 @@ static ssize_t send_msg(struct file *file, const char __user *buf, size_t count,
 	return count;
 
 }
-
-
-
 
 module_init(master_init);
 module_exit(master_exit);

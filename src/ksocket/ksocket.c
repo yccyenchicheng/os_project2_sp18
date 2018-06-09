@@ -1,12 +1,12 @@
-/* 
- * ksocket project
+/*
  * BSD-style socket APIs for kernel 2.6 developers
+ * 
+ * This ksocket is adapted from:
  * 
  * @2007-2008, China
  * @song.xian-guang@hotmail.com (MSN Accounts)
  * 
  * This code is licenced under the GPL
- * Feel free to contact me if any questions
  * 
  */
 #include <linux/module.h>
@@ -23,9 +23,7 @@
 #define KSOCKET_NAME	"ksocket"
 #define KSOCKET_VERSION	"0.0.2"
 #define KSOCKET_DESCPT	"BSD-style socket APIs for kernel 2.6 developers"
-#define KSOCKET_AUTHOR	"msn : song.xian-guang@hotmail.com\n"\
-						"blog: http://sxg.cublog.cn"
-#define KSOCKET_DATE	"2008-05-15"
+#define KSOCKET_AUTHOR	"Original author: song.xian-guang@hotmail, http://sxg.cublog.cn"
 
 MODULE_AUTHOR(KSOCKET_AUTHOR);
 MODULE_DESCRIPTION(KSOCKET_NAME"-"KSOCKET_VERSION"\n"KSOCKET_DESCPT);
@@ -435,7 +433,7 @@ static int ksocket_init(void)
 
 static void ksocket_exit(void)
 {
-	printk("ksocket exit\n");
+	printk("KSocket exit.\n");
 }
 
 module_init(ksocket_init);
