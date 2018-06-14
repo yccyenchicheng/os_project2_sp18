@@ -14,6 +14,11 @@
 #define BUF_SIZE 512
 #define MAP_SIZE PAGE_SIZE * 100
 
+// note that in slave_device, we define
+// slave_IOCTL_CREATESOCK 0x12345677
+// slave_IOCTL_MMAP 0x12345678
+// slave_IOCTL_EXIT 0x12345679
+
 int main (int argc, char* argv[]) {
 	if (argc != 4) {
 		printf("Usage: sudo ./slave received_file <fcntl or mmap> master_ip\n");
@@ -29,7 +34,7 @@ int main (int argc, char* argv[]) {
 	strcpy(method, argv[2]);
 	strcpy(master_ip, argv[3]);
 
-	int i, slave_fd, file_fd; // the file_descriptor for slave_device and the output file
+	int slave_fd, file_fd; // the file_descriptor for slave_device and the output file
 	if( (slave_fd = open("/dev/slave_device", O_RDWR)) < 0) { //should be O_RDWR for PROT_WRITE when mmap()
 		perror("error: cannot open the slave_device.\n");
 		return 1;

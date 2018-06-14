@@ -163,20 +163,20 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 			addr_len = sizeof(struct sockaddr_in);
 
 			sockfd_cli = ksocket(AF_INET, SOCK_STREAM, 0);
-			printk("sockfd_cli = 0x%p, socket has been created\n", sockfd_cli);
+			printk("sockfd_cli = 0x%p, socket has been created!\n", sockfd_cli);
 
 			if (sockfd_cli == NULL) {
-				printk("socket failed\n");
+				printk("error: socket creation failed.\n");
 				return -1;
 			}
 
 			if (kconnect(sockfd_cli, (struct sockaddr*)&addr_srv, addr_len) < 0) {
-				printk("connect failed\n");
+				printk("error: socket connection failed.\n");
 				return -1;
 			}
 
 			tmp = inet_ntoa(&addr_srv.sin_addr);
-			printk("connected to : %s %d\n", tmp, ntohs(addr_srv.sin_port));
+			printk("socket connected to: %s %d\n", tmp, ntohs(addr_srv.sin_port));
 			kfree(tmp);
 			ret = 0;
 			
@@ -198,7 +198,7 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 
 		case slave_IOCTL_EXIT:
 			if (kclose(sockfd_cli) == -1) {
-				printk("error: kclose cli failed.\n");
+				printk("error: kclose client failed.\n");
 				return -1;
 			}
 
