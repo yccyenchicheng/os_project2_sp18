@@ -18,10 +18,8 @@ static const struct modversion_info ____versions[]
 __used
 __attribute__((section("__versions"))) = {
 	{ 0x59caa4c3, __VMLINUX_SYMBOL_STR(module_layout) },
-	{ 0x1d7d15c9, __VMLINUX_SYMBOL_STR(debugfs_remove) },
 	{ 0x24598c4e, __VMLINUX_SYMBOL_STR(misc_deregister) },
 	{ 0x774f6678, __VMLINUX_SYMBOL_STR(misc_register) },
-	{ 0x21585d42, __VMLINUX_SYMBOL_STR(debugfs_create_file) },
 	{ 0xa202a8e5, __VMLINUX_SYMBOL_STR(kmalloc_order_trace) },
 	{ 0x4f8b5ddb, __VMLINUX_SYMBOL_STR(_copy_to_user) },
 	{ 0x10cde6fd, __VMLINUX_SYMBOL_STR(inet_ntoa) },
@@ -50,4 +48,4 @@ __attribute__((section(".modinfo"))) =
 "depends=ksocket";
 
 
-MODULE_INFO(srcversion, "1B3086A7CC2A306AF4A9071");
+MODULE_INFO(srcversion, "F47B4C470AC72EDC7AF125C");

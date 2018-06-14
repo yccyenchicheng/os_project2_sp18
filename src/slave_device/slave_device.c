@@ -29,13 +29,10 @@
 #define slave_IOCTL_MMAP 0x12345678
 #define slave_IOCTL_EXIT 0x12345679
 
-
 #define BUF_SIZE 512
 #define MAP_SIZE PAGE_SIZE * 100
 
-
-
-struct dentry  *file1;//debug file
+//struct dentry *file1;//debug file
 
 typedef struct socket * ksocket_t;
 
@@ -112,7 +109,7 @@ static struct miscdevice slave_dev = {
 static int __init slave_init(void)
 {
 	int ret;
-	file1 = debugfs_create_file("slave_debug", 0644, NULL, NULL, &slave_fops);
+	//file1 = debugfs_create_file("slave_debug", 0644, NULL, NULL, &slave_fops);
 
 	//register the device
 	if( (ret = misc_register(&slave_dev)) < 0){
@@ -129,7 +126,7 @@ static void __exit slave_exit(void)
 {
 	misc_deregister(&slave_dev);
 	printk(KERN_INFO "slave exited!\n");
-	debugfs_remove(file1);
+	//debugfs_remove(file1);
 }
 
 
