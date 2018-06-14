@@ -36,37 +36,39 @@ int main (int argc, char* argv[]) {
 	strcpy(method, argv[2]);
 	strcpy(ip, argv[3]);
 
-	if( (dev_fd = open("/dev/slave_device", O_RDWR)) < 0) //should be O_RDWR for PROT_WRITE when mmap()
-	{
+	if( (dev_fd = open("/dev/slave_device", O_RDWR)) < 0) { //should be O_RDWR for PROT_WRITE when mmap()
 		perror("error: cannot open the slave_device.\n");
 		return 1;
 	}
+
+	// record the start of the transmission time
 	gettimeofday(&start ,NULL);
-	if( (file_fd = open (file_name, O_RDWR | O_CREAT | O_TRUNC)) < 0)
-	{
+
+	// open the output file to write
+	if( (file_fd = open (file_name, O_RDWR | O_CREAT | O_TRUNC)) < 0) {
 		perror("error: cannot open the ouput file to write\n");
 		return 1;
 	}
 
-	if(ioctl(dev_fd, 0x12345677, ip) == -1)	//0x12345677 : connect to master in the device
-	{
-		perror("ioclt create slave socket error\n");
+	if(ioctl(dev_fd, 0x12345677, ip) == -1)	{ //0x12345677 : connect to master in the device
+		perror("error: ioclt cannot create the slave socket.\n");
 		return 1;
 	}
 
-
-	switch(method[0])
-	{
-		case 'f'://fcntl : read()/write()
+	switch(method[0]) {
+		// for fcntl
+		case 'f': 
 			do
 			{
 				ret = read(dev_fd, buf, sizeof(buf)); // read from the the device
 				write(file_fd, buf, ret); //write to the input file
 				file_size += ret;
-			}while(ret > 0);
+			} while(ret > 0);
 			break;
+
+		// for mmap
 		case 'm':
-			while (1) {
+			while (true) {
 				ret = ioctl(dev_fd, 0x12345678);
 				if (ret == 0) {
 					file_size = offset;
@@ -79,21 +81,22 @@ int main (int argc, char* argv[]) {
 				offset += ret;
 			}
 			break;
+
 	}
+
 	ioctl(dev_fd, 7122);
-	if(ioctl(dev_fd, 0x12345679) == -1)// end receiving data, close the connection
-	{
-		perror("ioclt client exits error\n");
+
+	if (ioctl(dev_fd, 0x12345679) == -1) { // we have done receiving data, so we close the connection
+		perror("error: ioclt client cannot exit\n");
 		return 1;
 	}
+
 	gettimeofday(&end, NULL);
 	trans_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.001;
 	printf("Transmission time: %lf ms, File size: %zd bytes\n", trans_time, file_size);
-
 
 	close(file_fd);
 	close(dev_fd);
 	return 0;
 }
-
 
