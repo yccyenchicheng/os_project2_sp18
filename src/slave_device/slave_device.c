@@ -134,7 +134,6 @@ int slave_close(struct inode *inode, struct file *file_p) {
 	return 0;
 }
 
-
 static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param) {
 	long ret = -EINVAL;
 
@@ -189,6 +188,7 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 				if (rec_n == 0) {
 					break;
 				}
+
 				memcpy(file->private_data + offset, buf, rec_n);
 				offset += rec_n;
 			}
@@ -198,7 +198,7 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 
 		case slave_IOCTL_EXIT:
 			if (kclose(sockfd_cli) == -1) {
-				printk("kclose cli error\n");
+				printk("error: kclose cli failed.\n");
 				return -1;
 			}
 
@@ -211,7 +211,9 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 			pmd = pmd_offset(pud, ioctl_param);
 			ptep = pte_offset_kernel(pmd , ioctl_param);
 			pte = *ptep;
-			printk("slave: %lX\n", pte);
+			// show the page descriptors of the mapped memory region
+			//printk("page descriptors of slave_device: %lX\n", pte);
+			printk("%lX\n", pte);
 			ret = 0;
 			break;
 	}
