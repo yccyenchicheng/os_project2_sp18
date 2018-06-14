@@ -1,6 +1,6 @@
 #
-  # Makefile for kernel test
-  #
+# Makefile for master_device
+#
 PWD         := $(shell pwd) 
 KVERSION    := $(shell uname -r)
 KERNEL_DIR   = /usr/src/linux-headers-$(KVERSION)/
