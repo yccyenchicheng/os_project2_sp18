@@ -68,7 +68,7 @@ int main (int argc, char* argv[]) {
 
 		// for mmap
 		case 'm':
-			while (true) {
+			while (1) {
 				ret = ioctl(dev_fd, 0x12345678);
 				if (ret == 0) {
 					file_size = offset;
