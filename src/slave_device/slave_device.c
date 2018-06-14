@@ -44,6 +44,7 @@ extern char *inet_ntoa(struct in_addr *in); // According to the sample code, rem
 static int __init slave_init(void);
 static void __exit slave_exit(void);
 
+// for slave_device's file operations
 int slave_open(struct inode *inode, struct file *file_p);
 int slave_close(struct inode *inode, struct file *file_p);
 static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param);
@@ -53,6 +54,7 @@ static mm_segment_t old_fs;
 static ksocket_t sockfd_cli; // socket to the master
 static struct sockaddr_in addr_srv; //address of the master
 
+// the following part of mmap implementation is based on the sample code
 void mmap_open(struct vm_area_struct *vma) {
 	/* Do nothing */
 }
@@ -136,13 +138,9 @@ int slave_close(struct inode *inode, struct file *file_p) {
 static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param) {
 	long ret = -EINVAL;
 
-	int addr_len ;
-	//unsigned int i;
-	//size_t len, data_size = 0;
+	int addr_len;
 	size_t offset = 0, rec_n;
 	char *tmp, ip[20], buf[BUF_SIZE];
-	//struct page *p_print;
-	//unsigned char *px;
 
 	pgd_t *pgd;
 	pud_t *pud;
@@ -150,7 +148,6 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 	pte_t *ptep, pte;
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
-
 
 	switch(ioctl_num){
 		case slave_IOCTL_CREATESOCK: // create the socket and connect to master_device
