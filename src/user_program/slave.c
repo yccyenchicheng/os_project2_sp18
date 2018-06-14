@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -87,7 +88,7 @@ int main (int argc, char* argv[])
 	}
 	gettimeofday(&end, NULL);
 	trans_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.001;
-	printf("Transmission time: %lf ms, File size: %d bytes\n", trans_time, file_size);
+	printf("Transmission time: %lf ms, File size: %zd bytes\n", trans_time, file_size);
 
 
 	close(file_fd);
