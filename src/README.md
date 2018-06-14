@@ -27,11 +27,11 @@ And in `dmesg`, we should see the `page descriptors` for method `mmap`.
 
 File contents
 ---
-- `master_device/` : the directory of the c code and `Makefile` for the `master_device` kernel module
-- `slave_device/`  : the directory of the c code and `Makefile` for the `slave_device` kernel module
-- `ksocket/`       : the directory of the c code and `Makefile` for the `ksocket` kernel module to use the kernel socket 
-- `user_program/`  : the user program for `master` side and `slave` side
-- `input/`         : input files to be transmitted
-- `output/`        : output files created by us
+- `src/master_device/` : the directory of the c code and `Makefile` for the `master_device` kernel module
+- `src/slave_device/`  : the directory of the c code and `Makefile` for the `slave_device` kernel module
+- `src/ksocket/`       : the directory of the c code and `Makefile` for the `ksocket` kernel module to use the kernel socket 
+- `src/user_program/`  : the user program for `master` side and `slave` side
+- `src/input/`         : input files to be transmitted
+- `src/output/`        : output files created by us
   
 Thanks for reading.
