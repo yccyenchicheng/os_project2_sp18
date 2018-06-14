@@ -20,83 +20,92 @@ int main (int argc, char* argv[]) {
 		exit(0);
 	}
 
-	char buf[BUF_SIZE];
-	int i, dev_fd, file_fd; // the file_descriptor for slave_device and the output file
-	size_t ret, file_size = 0, data_size = -1, offset = 0;
-	char file_name[50];
+	// get received_file path, method and master_ip from command line
+	char received_file[50];
 	char method[20];
-	char ip[20];
-	struct timeval start;
-	struct timeval end;
-	double trans_time; //calulate the time between the device is opened and it is closed
-	char *kernel_address, *file_address;
+	char master_ip[20];
 
-
-	strcpy(file_name, argv[1]);
+	strcpy(received_file, argv[1]);
 	strcpy(method, argv[2]);
-	strcpy(ip, argv[3]);
+	strcpy(master_ip, argv[3]);
 
-	if( (dev_fd = open("/dev/slave_device", O_RDWR)) < 0) { //should be O_RDWR for PROT_WRITE when mmap()
+	int i, slave_fd, file_fd; // the file_descriptor for slave_device and the output file
+	if( (slave_fd = open("/dev/slave_device", O_RDWR)) < 0) { //should be O_RDWR for PROT_WRITE when mmap()
 		perror("error: cannot open the slave_device.\n");
 		return 1;
 	}
+
+	// for transmission time
+	struct timeval start; 
+	struct timeval end;
+	double transmission_time; //calulate the time between the device is opened and it is closed
 
 	// record the start of the transmission time
 	gettimeofday(&start ,NULL);
 
 	// open the output file to write
-	if( (file_fd = open (file_name, O_RDWR | O_CREAT | O_TRUNC)) < 0) {
+	if( (file_fd = open (received_file, O_RDWR | O_CREAT | O_TRUNC)) < 0) {
 		perror("error: cannot open the ouput file to write\n");
 		return 1;
 	}
 
-	if(ioctl(dev_fd, 0x12345677, ip) == -1)	{ //0x12345677 : connect to master in the device
+	if(ioctl(slave_fd, 0x12345677, master_ip) == -1)	{ //0x12345677 : connect to master in the device
 		perror("error: ioclt cannot create the slave socket.\n");
 		return 1;
 	}
 
+
+	// for fcntl
+	char fcntl_buffer[BUF_SIZE];         
+	size_t ret, file_sz = 0, offset = 0;
+
+	// for mmap
+	char *kernel_address, *file_address;
+
 	switch(method[0]) {
 		// for fcntl
 		case 'f': 
-			do
-			{
-				ret = read(dev_fd, buf, sizeof(buf)); // read from the the device
-				write(file_fd, buf, ret); //write to the input file
-				file_size += ret;
+			do {
+				ret = read(slave_fd, fcntl_buffer, sizeof(fcntl_buffer)); // read from the the device
+				write(file_fd, fcntl_buffer, ret); //write to the input file
+				file_sz += ret;
 			} while(ret > 0);
 			break;
 
 		// for mmap
 		case 'm':
 			while (1) {
-				ret = ioctl(dev_fd, 0x12345678);
+				ret = ioctl(slave_fd, 0x12345678);
+
 				if (ret == 0) {
-					file_size = offset;
+					file_sz = offset;
 					break;
 				}
+
 				posix_fallocate(file_fd, offset, ret);
-				file_address = mmap(NULL, ret, PROT_WRITE, MAP_SHARED, file_fd, offset);
-				kernel_address = mmap(NULL, ret, PROT_READ, MAP_SHARED, dev_fd, offset);
-				memcpy(file_address, kernel_address, ret);
+				file_address = mmap(NULL, ret, PROT_WRITE, MAP_SHARED, file_fd, offset); // map data to file_address
+				kernel_address = mmap(NULL, ret, PROT_READ, MAP_SHARED, slave_fd, offset); // map data to kernel_address
+				memcpy(file_address, kernel_address, ret);                               // copy the memory between them
 				offset += ret;
 			}
 			break;
 
 	}
 
-	ioctl(dev_fd, 7122);
+	ioctl(slave_fd, 7122); // ??
 
-	if (ioctl(dev_fd, 0x12345679) == -1) { // we have done receiving data, so we close the connection
+	if (ioctl(slave_fd, 0x12345679) == -1) { // we have done receiving data, so we should close the connection
 		perror("error: ioclt client cannot exit\n");
 		return 1;
 	}
 
+	close(slave_fd);
+	// transmission time ends when we closed the slave_device
 	gettimeofday(&end, NULL);
-	trans_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.001;
-	printf("Transmission time: %lf ms, File size: %zd bytes\n", trans_time, file_size);
+	transmission_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.001;
+	printf("Transmission time: %lf ms, File size: %zd bytes\n", transmission_time, file_sz);
 
 	close(file_fd);
-	close(dev_fd);
 	return 0;
 }
 
