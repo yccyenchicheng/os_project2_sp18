@@ -14,14 +14,14 @@
 #define BUF_SIZE 512
 #define MAP_SIZE PAGE_SIZE * 100
 
-int main (int argc, char* argv[])
-{
+int main (int argc, char* argv[]) {
 	if (argc != 4) {
 		printf("Usage: sudo ./slave received_file <fcntl or mmap> master_ip\n");
 		exit(0);
 	}
+
 	char buf[BUF_SIZE];
-	int i, dev_fd, file_fd;// the fd for the device and the fd for the input file
+	int i, dev_fd, file_fd; // the file_descriptor for slave_device and the output file
 	size_t ret, file_size = 0, data_size = -1, offset = 0;
 	char file_name[50];
 	char method[20];
@@ -36,15 +36,15 @@ int main (int argc, char* argv[])
 	strcpy(method, argv[2]);
 	strcpy(ip, argv[3]);
 
-	if( (dev_fd = open("/dev/slave_device", O_RDWR)) < 0)//should be O_RDWR for PROT_WRITE when mmap()
+	if( (dev_fd = open("/dev/slave_device", O_RDWR)) < 0) //should be O_RDWR for PROT_WRITE when mmap()
 	{
-		perror("failed to open /dev/slave_device\n");
+		perror("error: cannot open the slave_device.\n");
 		return 1;
 	}
 	gettimeofday(&start ,NULL);
 	if( (file_fd = open (file_name, O_RDWR | O_CREAT | O_TRUNC)) < 0)
 	{
-		perror("failed to open input file\n");
+		perror("error: cannot open the ouput file to write\n");
 		return 1;
 	}
 
