@@ -6,13 +6,22 @@ Operating System Project 2
 
 Quick start
 ---
-The following are the steps to execute the code of this project,
-1. First we need to compile the codes and install the modules: `ksocket`, `master_device`, `slave_device`:
+以下是執行此 project 原始碼的步驟，
+1. 首先我們必須編譯此原始碼，以及將以下核心模組安裝上去：`ksocket`, `master_device`, `slave_device`.  此步驟我們借用了 `sample_code` 裡的
+shell script 來達成：
 ``` 
 $ sudo ./compile.sh
 ```
-2. (Optional) Check if `ksocket`, `master_device` and `slave_device` have been installed:
+2. (Optional) 此步驟只是來確認 `ksocket`, `master_device` 和 `slave_device` 是否成功的被 installed:
 ``` sudo lsmod ```
+若成功，我們應能在 console 順利看到  
+```
+Module                  Size  Used by
+slave_device           12905  0 
+master_device          13040  0 
+ksocket                15266  2 slave_device,master_device
+```
+等關於此三個核心模組之資訊。
 3. Change to `user_program` directory,
 ``` 
 $ cd user_program
