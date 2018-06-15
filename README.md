@@ -13,7 +13,9 @@ shell script 來達成：
 $ sudo ./compile.sh
 ```
 2. (Optional) 此步驟只是來確認 `ksocket`, `master_device` 和 `slave_device` 是否成功的被 installed:
-``` sudo lsmod ```
+```
+$ sudo lsmod
+```
 若成功，我們應能在 console 順利看到  
 ```
 Module                  Size  Used by
@@ -22,28 +24,27 @@ master_device          13040  0
 ksocket                15266  2 slave_device,master_device
 ```
 等關於此三個核心模組之資訊。
-3. Change to `user_program` directory,
+3. 成功 install 這三個模組後，我們切換到 `user_program` 的資料夾,
 ``` 
 $ cd user_program
 ```
-4. Follow the sample input from the course website, we need to specify:
+4. 接著遵循課程網頁上 project 2 的範例輸出，我們對於 `master`, `slave` 兩邊的 `user_program` 分別給予以下指令：
     - For slave-side: `L` for <path/received_file>, `M` for method(`fcntl` or `mmap`), `IP` for master's IP
     - For master-side: `L` for <path/target_file>,  `M` for method(`fcntl` or `mmap`)  
-For example,
+例如：
 ```
 $ sudo ./master ../input/f1.in mmap
 $ sudo ./slave ../output/f1.out fcntl 127.0.0.1
-```  
-Then we should see the `transimission time` and `transmitted file size`.  
-And in `dmesg`, we should see the `page descriptors` for method `mmap`.
+``` 
+如此我們便能在 console 上看到傳輸時間和傳輸的檔案大小。  
+另外在 `dmesg` 裡，我們也能看到關於 mapped memory region 的 page descriptors。
 
-File contents
+檔案內容
 ---
-- `src/master_device/` : the directory of the c code and `Makefile` for the `master_device` kernel module
-- `src/slave_device/`  : the directory of the c code and `Makefile` for the `slave_device` kernel module
-- `src/ksocket/`       : the directory of the c code and `Makefile` for the `ksocket` kernel module to use the kernel socket 
-- `src/user_program/`  : the user program for `master` side and `slave` side
-- `src/input/`         : input files to be transmitted
-- `src/output/`        : output files created by us
+- `src/master_device/` : 此資料夾包含了 `master_device` 核心模組的 c code 和 `Makefile` 
+- `src/slave_device/`  : 此資料夾包含了 `slave_device` 核心模組的 c code 和 `Makefile` 
+- `src/ksocket/`       : 此資料夾包含了 `ksocket` 核心模組的 c code 和 `Makefile` 
+- `src/user_program/`  : `master`, `slave` side 的 user program 
+- `src/input/`         : 要被傳輸之輸入檔案input files to be transmitted
+- `src/output/`        : 輸出檔案的目的資料夾（不一定要輸出至此資料夾）
   
-Thanks for reading.
