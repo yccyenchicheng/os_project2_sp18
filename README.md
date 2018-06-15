@@ -1,10 +1,12 @@
 Operating System Project 2
 ===
-- Link: http://rswiki.csie.org/dokuwiki/courses:106_2:project_2
+- 作業連結:  http://rswiki.csie.org/dokuwiki/courses:106_2:project_2
 
-- Slide: http://rswiki.csie.org/dokuwiki/_media/courses:102_2:os2014_project_2_si.pdf
+- 投影片: http://rswiki.csie.org/dokuwiki/_media/courses:102_2:os2014_project_2_si.pdf
 
-Quick start
+- 原始碼參考: 助教提供之 `sample_code`
+
+執行步驟
 ---
 以下是執行此 project 原始碼的步驟，
 1. 首先我們必須編譯此原始碼，以及將以下核心模組安裝上去：`ksocket`, `master_device`, `slave_device`.  此步驟我們借用了 `sample_code` 裡的
