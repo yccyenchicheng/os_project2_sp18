@@ -190,7 +190,7 @@ static long master_ioctl(struct file *file, unsigned int ioctl_num, unsigned lon
 	pmd_t *pmd;
         pte_t *ptep, pte;
 	switch(ioctl_num){
-		case master_IOCTL_CREATESOCK:// create socket and accept a connection
+		case master_IOCTL_CREATESOCK: // create socket and accept a connection
 			sockfd_cli = kaccept(sockfd_srv, (struct sockaddr *)&addr_cli, &addr_len);
 			if (sockfd_cli == NULL)
 			{
@@ -234,7 +234,7 @@ static ssize_t send_msg(struct file *file, const char __user *buf, size_t count,
 {
 //call when user is writing to this device
 	char msg[BUF_SIZE];
-	if(copy_from_user(msg, buf, count))
+	if(copy_from_user(msg, buf, count)) //copy count bytes of data from buf to msg, and return number of bytes that cannot be copied
 		return -ENOMEM;
 	ksend(sockfd_cli, msg, count, 0);
 

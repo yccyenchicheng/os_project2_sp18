@@ -14,7 +14,7 @@
 #define BUF_SIZE 512
 #define MAP_SIZE PAGE_SIZE * 100
 
-size_t get_filesize(const char* filename);//get the size of the input file
+size_t get_filesize(const char* filename);   //get the size of the input file
 
 
 int main (int argc, char* argv[])
@@ -26,13 +26,13 @@ int main (int argc, char* argv[])
 	
 
 	char buf[BUF_SIZE];
-	int i, dev_fd, file_fd;// the fd for the device and the fd for the input file
+	int i, dev_fd, file_fd;   // the fd for the device and the fd for the input file
 	size_t ret, file_size, offset = 0, tmp;
 	char file_name[50], method[20];
 	char *kernel_address = NULL, *file_address = NULL;
 	struct timeval start;
 	struct timeval end;
-	double trans_time; //calulate the time between the device is opened and it is closed
+	double trans_time;   //calulate the time between the device is opened and it is closed
 
 
 	strcpy(file_name, argv[1]);
@@ -57,7 +57,7 @@ int main (int argc, char* argv[])
 	}
 
 
-	if(ioctl(dev_fd, 0x12345677) == -1) //0x12345677 : create socket and accept the connection from the slave
+	if(ioctl(dev_fd, 0x12345677) == -1)   //0x12345677 : create socket and accept the connection from the slave
 	{
 		perror("ioclt server create socket error\n");
 		return 1;
@@ -69,8 +69,8 @@ int main (int argc, char* argv[])
 		case 'f': //fcntl : read()/write()
 			do
 			{
-				ret = read(file_fd, buf, sizeof(buf)); // read from the input file
-				write(dev_fd, buf, ret);//write to the the device
+				ret = read(file_fd, buf, sizeof(buf)); // read from the input file, and return the number of bytes being read
+				write(dev_fd, buf, ret); //write to the the device
 			}while(ret > 0);
 			break;
 		case 'm':
@@ -83,11 +83,13 @@ int main (int argc, char* argv[])
 				kernel_address = mmap(NULL, length, PROT_WRITE, MAP_SHARED, dev_fd, offset);
 				memcpy(kernel_address, file_address, length);
 				offset += length;
-				ioctl(dev_fd, 0x12345678, length);
+				ioctl(dev_fd, 0x12345678, length); // send the data to slave through socket
 			}
 			break;
 	}
-	ioctl(dev_fd, 7122);
+
+	ioctl(dev_fd, 7122); // display the content of page descriptors of the mapped memory region
+
 	if(ioctl(dev_fd, 0x12345679) == -1) // end sending data, close the connection
 	{
 		perror("ioclt server exits error\n");
