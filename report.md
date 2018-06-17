@@ -4,8 +4,8 @@ Operating System Project 2 Report Spring 2018 NTU
 程式的設計
 ---
 - `src/master_device/` : 裡面包含
-    - `Makefile`: 
-    - `master_device.c`:
+    - `Makefile`: `master_device` 的 Makefile，我們用其編譯核心模組，使得我們能透過 `sudo insmod` 來安裝模組，接著便能供 `master` 的 `user_program`: `master.c` 使用。
+- `master_device.c`: 實作 master_device 的 file operation, 包含負責建立 socket 連結的 ioctl, 接收 user program 資料的 write 與 mmap。
 - `src/slave_device/` : 此資料夾主要由助教提供的 `sample_code` 來改進，進行了 `fcntl` 和 `mmap` 的實作以及傳輸時間的計算。另外 *page descriptors of the mapped memory region* 也能透過 `dmesg` 來查看。
     - `Makefile`: `slave_device` 的 Makefile，我們用其編譯核心模組，使得我們能透過 `sudo insmod` 來安裝模組，接著便能供 `slave` 的 `user_program`: `slave.c` 使用。
     - `slave_device.c`: 我們同樣在參考了 `sample_code` 裡 `slave_device` 的範例來實作 `slave_device.c`，另外在核心模組的觀念上，我們也參考了下列連結的 c 程式碼：  
