@@ -91,6 +91,12 @@ int main (int argc, char* argv[]) {
 				file_address = mmap(NULL, ret, PROT_WRITE, MAP_SHARED, file_fd, offset); // map data to file_address
 				kernel_address = mmap(NULL, ret, PROT_READ, MAP_SHARED, slave_fd, offset); // map data to kernel_address
 				memcpy(file_address, kernel_address, ret);                               // copy the memory between them
+				//printf("file: %x\n", *file_address);
+				//printf("kernel: %x\n", *kernel_address);
+				//printf("file: %X\n", *file_address);
+				//printf("kernel: %X\n", *kernel_address);
+				//printf("file: %p\n", file_address);
+				//printf("kernel: %p\n", kernel_address);
 				offset += ret;
 			}
 			break;
