@@ -103,10 +103,10 @@ int main (int argc, char* argv[]) {
 
 	}
 
-	ioctl(slave_fd, 7122); // ??
+	ioctl(slave_fd, 7122); // display the memory mapped region of slave_device
 
 	if (ioctl(slave_fd, 0x12345679) == -1) { // we have done receiving data, so we should close the connection
-		perror("error: ioclt client cannot exit\n");
+		perror("error: ioctl client cannot exit\n");
 		return 1;
 	}
 

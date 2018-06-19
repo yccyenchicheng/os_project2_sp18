@@ -212,8 +212,8 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 			ptep = pte_offset_kernel(pmd , ioctl_param);
 			pte = *ptep;
 			// show the page descriptors of the mapped memory region
-			//printk("page descriptors of slave_device: %lX\n", pte);
-			printk("%lX\n", pte);
+			printk("page descriptors of slave_device: %lX\n", pte);
+			//printk("%lX\n", pte);
 			ret = 0;
 			break;
 	}
