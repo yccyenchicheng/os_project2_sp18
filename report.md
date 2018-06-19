@@ -101,7 +101,7 @@ file I/O v.s. memory-mapped I/O & 差異的原因
 
 1. 就f3.in和f4.in的實驗結果來說，m/m不論在master端或是slave端，不論read或write的時間皆快過f/f。
 2. 而f1.in和f2.in的實驗結果中，當執行時間小於1ms的話，m/m並不一定會快過f/f。猜是因為執行mmap所需的準備時間較read/write長，所以file過小的時候使用mmap並沒有顯著的優勢。
-3. 另外，f4中的m/m較f/m及m/f慢，我們認為是使用socket時的變異比較大，而非m/f或f/m優於m/m的緣故。比如f1只有50byte，但其f/m的執行時間高達8602ms，遠比f3、f4的同格數據來的大。
+3. 另外，f4中的m/m較f/m及m/f慢，我們認為是使用socket時的變異比較大，而非m/f或f/m優於m/m的緣故。比如f1只有50byte，遠比f3、f4的同格數據來的大。
 
 結論：socket配上mmap可以很好地改善transmission rate。
 (參考資料：https://www.ibm.com/developerworks/cn/linux/l-cn-zerocopy1/index.html)
