@@ -167,7 +167,7 @@ src/user_program/slave data/file3_in.out mmap 127.0.0.1
 ```
 - Output:  
 Master:  
-`Transmission time: 0.182000 ms, File size: 77566 bytes`
+`Transmission time: 0.182000 ms, File size: 77566 bytes`  
 Slave:  
 `Transmission time: 1.336000 ms, File size: 77566 bytes`
 
