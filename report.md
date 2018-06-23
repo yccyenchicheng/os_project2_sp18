@@ -18,7 +18,8 @@ Operating System Project 2 Report Spring 2018 NTU
 
 執行的結果
 ---
-- `f` 表示使用方法為 `fcntl`; `m` 表示使用方法為 `mmap`  
+- 方法: `fcntl`, `mmap`  
+
 ----- Master method `fcntl`, Slave method `fcntl` -----  
 
 - File: `file1_in`
